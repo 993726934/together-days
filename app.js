@@ -1,4 +1,5 @@
 import { categories, visibilityNames, escapeHTML as h, localDate, addDays, weekStart, localInput, visibleEvents, validateEvent, demoData } from './domain.js';
+import { accountName, registerAccount, loginAccount, changePassword } from './auth.js';
 
 const paths = {
   calendar: '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M16 3v4M8 3v4M3 11h18M8 15h2M14 15h2"/>',
@@ -40,9 +41,9 @@ const notify = message => { const t = document.querySelector('#toast'); t.textCo
 const fail = (el, error) => { el.textContent = friendlyError(error); };
 function friendlyError(error) {
   const message = error?.message || String(error);
-  if (/Invalid login credentials/i.test(message)) return '邮箱或密码不正确，请重试';
-  if (/Email not confirmed/i.test(message)) return '请先在邮箱中确认注册，再回来登录';
-  if (/already registered/i.test(message)) return '该邮箱已注册，请直接登录';
+  if (/Invalid login credentials/i.test(message)) return '账号或密码不正确，请重试';
+  if (/Email not confirmed/i.test(message)) return '账号服务仍要求验证，请联系管理员关闭邮箱确认；本网站不使用验证邮件';
+  if (/already registered|already been registered|user_already_exists/i.test(message)) return '这个账号已被使用，请换一个或直接登录';
   if (/rate limit|too many requests/i.test(message)) return '操作太频繁，请稍后再试';
   if (/Failed to fetch|NetworkError/i.test(message)) return '连接失败，请检查网络后重试';
   return message;
@@ -165,29 +166,24 @@ async function removeContact(id,button) {
 }
 function openAccount() {
   if(state.demo){openAuth();return;}
-  openModal('我的账号',`<p>${h(state.user.email)}</p><form id="profile-form"><label class="field"><span>我的昵称</span><input name="display_name" value="${h(state.profile?.display_name)}" required maxlength="30"></label><div class="form-error" role="alert"></div><button class="btn primary wide" type="submit">保存昵称</button></form><div class="profile-code" style="margin-top:22px"><small>我的好友码</small><strong>${h(state.profile?.friend_code)}</strong><button class="rail-link" style="margin:auto" data-action="copy-code">${icon('copy')}复制好友码</button></div><div class="account-actions"><button class="text-button" data-action="recovery">修改密码</button><button class="btn" data-action="logout">退出登录</button></div>`);
+  openModal('我的账号',`<p>登录账号：${h(accountName(state.user))}</p><form id="profile-form"><label class="field"><span>我的昵称</span><input name="display_name" value="${h(state.profile?.display_name)}" required maxlength="30"></label><div class="form-error" role="alert"></div><button class="btn primary wide" type="submit">保存昵称</button></form><div class="profile-code" style="margin-top:22px"><small>我的好友码</small><strong>${h(state.profile?.friend_code)}</strong><button class="rail-link" style="margin:auto" data-action="copy-code">${icon('copy')}复制好友码</button></div><div class="account-actions"><button class="text-button" data-action="change-password">修改密码</button><button class="btn" data-action="logout">退出登录</button></div>`);
 }
 function openAuth(mode='login') {
   state.authMode=mode;
-  openModal(mode==='reset'?'设置新密码':'和同频的人，一起计划',`${mode==='reset'?'':`<div class="auth-tabs"><button data-action="auth-login" class="${mode==='login'?'active':''}">登录账号</button><button data-action="auth-register" class="${mode==='register'?'active':''}">注册账号</button></div>`}${!configured?'<div class="notice warn">网站账号服务尚未配置。当前可以体验日程功能，管理员接入 Supabase 后即可注册和分享。</div>':''}<form id="auth-form">${mode==='register'?'<label class="field"><span>怎么称呼你</span><input name="name" maxlength="30" required placeholder="你的昵称" autocomplete="nickname"></label>':''}${mode!=='reset'?'<label class="field"><span>邮箱</span><input name="email" type="email" required placeholder="you@example.com" autocomplete="email"></label>':''}<label class="field"><span>${mode==='reset'?'新密码':'密码'}</span><input name="password" type="password" required minlength="8" maxlength="128" placeholder="至少 8 位" autocomplete="${mode==='login'?'current-password':'new-password'}"></label>${mode!=='login'?'<label class="field"><span>再次输入密码</span><input name="confirm" type="password" required minlength="8" maxlength="128" autocomplete="new-password"></label>':''}<div class="form-error" role="alert"></div><button class="btn primary wide" type="submit" ${!configured?'disabled':''}>${mode==='login'?'登录，查看我的日程':mode==='register'?'创建账号':'保存新密码'}</button></form>${mode==='login'?'<button class="text-button" data-action="recovery">忘记密码？</button>':''}<p class="help-link">${mode==='register'?'注册后请查收邮箱确认邮件。确认完成后，回到本站登录。':'让时间有安排，让分享有边界。'}</p>`);
+  openModal('和同频的人，一起计划',`<div class="auth-tabs"><button data-action="auth-login" class="${mode==='login'?'active':''}">登录账号</button><button data-action="auth-register" class="${mode==='register'?'active':''}">注册账号</button></div><p>只需账号和密码，不用邮箱或验证码。</p>${!configured?'<div class="notice warn">账号服务尚未接入。当前可以体验日程功能，管理员完成基础配置后即可注册。</div>':''}<form id="auth-form"><label class="field"><span>账号 / 手机号</span><input name="account" required minlength="4" maxlength="24" pattern="[A-Za-z0-9_]{4,24}" placeholder="自定义账号，或使用手机号" autocomplete="username" autocapitalize="none" spellcheck="false"><small>4–24 位字母、数字或下划线，不区分大小写。手机号仅作为账号，不发送短信。</small></label><label class="field"><span>密码</span><input name="password" id="auth-password" type="password" required minlength="8" maxlength="128" placeholder="至少 8 位" autocomplete="${mode==='login'?'current-password':'new-password'}"></label><button class="text-button" type="button" data-action="toggle-password" aria-controls="auth-password" aria-pressed="false">显示密码</button>${mode==='register'?'<label class="field"><span>昵称（选填）</span><input name="name" maxlength="30" placeholder="朋友们看到的名字" autocomplete="nickname"></label>':''}<div class="form-error" role="alert"></div><button class="btn primary wide" type="submit" ${!configured?'disabled':''}>${mode==='login'?'登录':'注册并登录'}</button></form><button class="text-button" data-action="forgot-password">忘记密码？</button><p class="help-link">请记住账号和密码，不支持邮件或短信找回。</p>`);
 }
 async function submitAuth(form) {
   const f=new FormData(form), mode=state.authMode, button=form.querySelector('[type=submit]');button.disabled=true;
   try {
     if(!db)throw new Error('请先按部署说明配置账号服务');
-    if(mode!=='login'&&f.get('password')!==f.get('confirm'))throw new Error('两次输入的密码不一致');
-    const redirect=new URL('./',location.href).href;
-    if(mode==='register'){
-      const {data,error}=await db.auth.signUp({email:f.get('email').trim(),password:f.get('password'),options:{data:{display_name:f.get('name').trim()},emailRedirectTo:redirect}});if(error)throw error;
-      if(!data.session){openModal('确认邮箱，就差这一步',`<p>如果该邮箱可以注册，确认邮件会发送至 <strong>${h(f.get('email'))}</strong>。请点击邮件中的链接完成注册。若没有收到，请检查垃圾邮件或稍后重试；已有账号可直接登录。</p><button class="btn primary wide" data-action="auth-login">返回登录</button>`);return;}
-    }else if(mode==='reset'){
-      const {error}=await db.auth.updateUser({password:f.get('password')});if(error)throw error;closeModal();notify('密码已更新');return;
-    }else {const {error}=await db.auth.signInWithPassword({email:f.get('email').trim(),password:f.get('password')});if(error)throw error;}
-    closeModal();notify('欢迎回来，今天也有小期待');
+    const values={account:f.get('account'),password:f.get('password'),name:f.get('name')};
+    if(mode==='register')await registerAccount(db,values);else await loginAccount(db,values);
+    closeModal();notify(mode==='register'?'注册成功，已经为你登录':'欢迎回来，今天也有小期待');
   }catch(error){fail(form.querySelector('.form-error'),error);}finally{button.disabled=false;}
 }
-function openRecovery() {
-  openModal('通过邮箱重设密码',`<p>输入注册邮箱，我们会发送重置密码链接。</p><form id="recovery-form"><label class="field"><span>注册邮箱</span><input type="email" name="email" required autocomplete="email" value="${h(state.demo?'':state.user?.email||'')}"></label><div class="form-error" role="alert"></div><button class="btn primary wide" ${!db?'disabled':''}>发送重置邮件</button></form>${!db?'<div class="notice warn">账号服务尚未配置。</div>':''}`);
+function openPasswordChange() {
+  if(state.demo)return openAuth();
+  openModal('修改密码',`<p>验证当前密码后，直接设置新密码，无需邮件或验证码。</p><form id="password-form"><label class="field"><span>当前密码</span><input name="current" type="password" required maxlength="128" autocomplete="current-password"></label><label class="field"><span>新密码</span><input name="password" type="password" required minlength="8" maxlength="128" autocomplete="new-password"></label><label class="field"><span>确认新密码</span><input name="confirm" type="password" required minlength="8" maxlength="128" autocomplete="new-password"></label><div class="form-error" role="alert"></div><button class="btn primary wide" type="submit">保存新密码</button></form>`);
 }
 function openMonth(base=state.date) {
   const date=new Date(base+'T12:00:00');date.setDate(1);const first=localDate(date), offset=(date.getDay()+6)%7;
@@ -262,7 +258,9 @@ document.addEventListener('click',async event=>{
   if(action==='remove-contact-confirm')return removeContact(id,button);
   if(action==='auth'||action==='auth-login')return openAuth();
   if(action==='auth-register')return openAuth('register');
-  if(action==='recovery')return openRecovery();
+  if(action==='change-password')return openPasswordChange();
+  if(action==='forgot-password')return openModal('忘记密码了？','<p>本站不绑定邮箱，也不发送短信。请联系网站管理员，并提供你的账号，由管理员核实身份后协助重置。手机号作为账号时，也不能通过短信找回。</p><button class="btn primary wide" data-action="auth-login">返回登录</button>');
+  if(action==='toggle-password'){const input=document.querySelector('#auth-password'),show=input.type==='password';input.type=show?'text':'password';button.textContent=show?'隐藏密码':'显示密码';button.setAttribute('aria-pressed',String(show));return;}
   if(action==='refresh'){if(state.demo){notify('体验数据已在本机保存');return;}await loadData();if(!state.error)notify('日程已同步');return;}
   if(action==='logout'){
     button.disabled=true;const {error}=await db.auth.signOut();
@@ -285,9 +283,9 @@ document.addEventListener('submit',async e=>{
     try{const name=new FormData(form).get('display_name').trim();if(!name)throw new Error('昵称不能为空');const {error}=await db.from('profiles').update({display_name:name}).eq('id',uid());if(error)throw error;await loadData(false);render();closeModal();notify('昵称已更新');}
     catch(error){fail(form.querySelector('.form-error'),error);}finally{button.disabled=false;}
   }
-  if(form.id==='recovery-form'){
+  if(form.id==='password-form'){
     const button=form.querySelector('button');button.disabled=true;
-    try{const {error}=await db.auth.resetPasswordForEmail(new FormData(form).get('email').trim(),{redirectTo:new URL('./',location.href).href});if(error)throw error;openModal('查看你的邮箱',`<p>如果这个邮箱已注册，你将收到重置密码的邮件。点击邮件链接后，可以在这里设置新密码。</p><button class="btn primary wide" data-action="close">知道了</button>`);}
+    try{const values=new FormData(form);await changePassword(db,state.user,{currentPassword:values.get('current'),password:values.get('password'),confirm:values.get('confirm')});closeModal();notify('密码已更新，下次请用新密码登录');}
     catch(error){fail(form.querySelector('.form-error'),error);}finally{button.disabled=false;}
   }
 });
@@ -298,13 +296,11 @@ async function init(){
   if(!configured){readSharedLink();return;}
   try{
     const {createClient}=await import('./assets/supabase.js');
-    db=createClient(cfg.supabaseUrl,cfg.supabaseKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-    let recovery=false;
+    db=createClient(cfg.supabaseUrl,cfg.supabaseKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
     db.auth.onAuthStateChange((event,session)=>{
-      if(event==='PASSWORD_RECOVERY'){recovery=true;setTimeout(()=>openAuth('reset'),0);}
       if((event==='SIGNED_IN'||event==='INITIAL_SESSION')&&session&&(state.demo||uid()!==session.user.id)){
         state.demo=false;state.user=session.user;state.profile=null;state.events=[];state.people=[];state.contacts=[];state.date=localDate();state.tab='all';state.category='all';state.search='';
-        setTimeout(async()=>{await loadData();if(!recovery)readSharedLink();},0);
+        setTimeout(async()=>{await loadData();readSharedLink();},0);
       }
       if(event==='SIGNED_OUT'&&!state.demo){closeModal();loadDemo();}
     });

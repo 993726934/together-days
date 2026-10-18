@@ -1,0 +1,15 @@
+{
+  "name": "together-days",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "同频 Together：手机日程与指定好友分享，GitHub Pages + Supabase",
+  "scripts": {
+    "start": "node serve.mjs",
+    "test": "node --test tests/domain.test.mjs",
+    "test:db": "node tests/rls.test.mjs"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.3.10"
+  }
+}

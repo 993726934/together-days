@@ -9,7 +9,8 @@
 - 网页、数据库初始化脚本、自动部署工作流已准备好。
 - 未填写账号配置时为明确标注的本机体验模式，不会建立真实账号，不会同步其他设备；体验内容不自动迁移到真实账号。
 - 本地已通过 4 组前端逻辑测试、23 项 PostgreSQL 权限检查，并在手机宽度浏览器中验证创建、编辑、指定分享校验与筛选。
-- 目前没有 Supabase 项目；GitHub 账号 `993726934` 已恢复登录，正在部署静态网站。尚无真实用户注册/邮件测试结果。
+- 网站已部署在 [https://993726934.github.io/together-days/](https://993726934.github.io/together-days/)，公开页面已验证可访问。源码仓库为 [993726934/together-days](https://github.com/993726934/together-days)。
+- 目前没有 Supabase 项目，正式账号服务尚未启用；线上显示体验模式。尚无真实用户注册/邮件测试结果。
 
 ## 1. 先在电脑上预览
 
@@ -63,7 +64,9 @@ http://127.0.0.1:4173/
 
 不要遗漏路径 `/together-days/` 和结尾 `/`。如果换仓库名，两个正式地址一并修改。参考 [官方 Redirect URLs 说明](https://supabase.com/docs/guides/auth/redirect-urls)。
 
-## 3. 部署到 GitHub Pages
+## 3. GitHub Pages 部署与后续更新
+
+当前仓库已创建，Pages 已启用，首次部署成功。**本项目无需再运行下方建仓命令**；这些命令仅供新建其他副本时参考。你现在只需完成第 2 节的 Supabase 配置，把修改后的 `config.js` 提交到现有仓库，就会自动重新部署。
 
 推荐创建项目仓库 `993726934/together-days`，避免覆盖账号已有的个人主页。
 
@@ -88,7 +91,7 @@ gh repo create 993726934/together-days --public --source . --remote origin --pus
 https://993726934.github.io/together-days/
 ```
 
-这是部署成功后的目标地址，当前交付并不表示它已经上线。工作流只发布网页与资源，不发布数据库脚本和测试文件。页面脚本均使用相对路径，兼容 GitHub Pages 项目目录。参考 [GitHub Pages 工作流文档](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)。
+当前此地址已经上线，账号服务等待第 2 节配置。工作流只发布网页与资源，不发布数据库脚本和测试文件。页面脚本均使用相对路径，兼容 GitHub Pages 项目目录。参考 [GitHub Pages 工作流文档](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)。
 
 也可以使用名为 `993726934.github.io` 的仓库部署在根域名，但需要先确认不会覆盖已有网站，并把 Supabase 返回地址改成根目录。
 

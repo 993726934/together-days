@@ -85,13 +85,13 @@ grant update(display_name) on public.profiles to authenticated;
 grant insert,update,delete on public.events to authenticated;
 
 create policy profile_read on public.profiles for select to authenticated using(private.can_read_profile(id));
-create policy profile_update on public.profiles for update to authenticated using(id=auth.uid()) with check(id=auth.uid());
-create policy contacts_read on public.contacts for select to authenticated using(owner_id=auth.uid());
+create policy profile_update on public.profiles for update to authenticated using(id=(select auth.uid())) with check(id=(select auth.uid()));
+create policy contacts_read on public.contacts for select to authenticated using(owner_id=(select auth.uid()));
 create policy event_read on public.events for select to authenticated using(private.can_read_event(id));
-create policy event_insert on public.events for insert to authenticated with check(owner_id=auth.uid());
-create policy event_update on public.events for update to authenticated using(owner_id=auth.uid()) with check(owner_id=auth.uid());
-create policy event_delete on public.events for delete to authenticated using(owner_id=auth.uid());
-create policy shares_read on public.event_shares for select to authenticated using(viewer_id=auth.uid() or private.owns_event(event_id));
+create policy event_insert on public.events for insert to authenticated with check(owner_id=(select auth.uid()));
+create policy event_update on public.events for update to authenticated using(owner_id=(select auth.uid())) with check(owner_id=(select auth.uid()));
+create policy event_delete on public.events for delete to authenticated using(owner_id=(select auth.uid()));
+create policy shares_read on public.event_shares for select to authenticated using(viewer_id=(select auth.uid()) or private.owns_event(event_id));
 
 create function public.add_contact(p_code text) returns void language plpgsql security definer set search_path='' as $$
 declare me uuid:=auth.uid(); target uuid;

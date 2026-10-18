@@ -7,13 +7,15 @@
 - 注册方式：**账号 + 密码**，昵称选填，注册成功后直接登录，无需邮箱、邮件验证或短信。
 - 账号为 4–24 位英文字母、数字或下划线，不区分大小写。手机号也能作为账号，但不验证号码归属。
 
-网站已经上线，目前尚未接入 Supabase，线上仍是明确标注的体验模式。体验数据只保存在本机，不会自动迁移到真实账号。完成以下三步即可启用真实账号和跨设备数据。
+网站已接入 Supabase 项目 `geqmiytvayzylyahiuok`，数据库和每条日程的可见权限已建立。账号注册方式为账号＋密码，不需要验证邮件。未登录时可以浏览明确标注的本机体验模式；注册或登录后才会读取和保存个人云端日程。体验数据不会自动迁移到真实账号。
+
+本项目的数据库、直接注册和公开配置均已完成，无需重复运行下面的初始化步骤。以下保留给管理员维护或建立其他副本时参考。
 
 ## 管理员只需三步
 
 ### 1. 创建数据库
 
-打开 [Supabase 控制台](https://supabase.com/dashboard)，新建项目。准备好后进入 **SQL Editor → New query**，运行 `supabase/schema.sql` 全部内容一次。已经运行过该脚本的项目不需要重跑。
+当前项目的数据库已经建立，**不要重复运行初始化脚本**。如另建新项目，可在 [Supabase 控制台](https://supabase.com/dashboard) 的 **SQL Editor → New query** 中运行 `supabase/schema.sql` 全部内容一次。`supabase/migrations/` 保存当前项目实际已执行的迁移历史。
 
 日程按数据库行级权限区分「仅自己」「指定好友」「所有登录用户」。密码由 Supabase Auth 管理，不写入日程表。
 
@@ -36,7 +38,7 @@
 
 ```javascript
 window.APP_CONFIG = {
-  supabaseUrl: "https://你的项目编号.supabase.co",
+  supabaseUrl: "https://geqmiytvayzylyahiuok.supabase.co",
   supabaseKey: "sb_publishable_你的公开密钥"
 };
 ```
@@ -96,7 +98,7 @@ npm.cmd install
 npm.cmd run test:db
 ```
 
-11 组逻辑测试覆盖账号规范化、手机号不作为默认公开昵称、直接注册会话、重复账号、确认配置错误、登录和修改密码，以及日程校验。数据库的 23 项测试通过 PGlite 执行实际 PostgreSQL 权限脚本，使用合成用户，不会连接正式项目。
+11 组逻辑测试覆盖账号规范化、手机号不作为默认公开昵称、直接注册会话、重复账号、确认配置错误、登录和修改密码，以及日程校验。数据库的 23 项测试通过 PGlite 执行实际 PostgreSQL 权限脚本，使用合成用户，不会连接正式项目。真实项目的接口验收与结果见 `VERIFICATION.md`。
 
 接入真实 Supabase 后，用 A、B、C 验证：A 的私有日程只有 A 可见；指定 B 的日程 C 不能读；B 不能修改 A 的活动；撤销分享或移除好友后，B 同步即不可读。另需验证直接注册、重复账号、退出再登录、修改后旧密码失效，以及另一台手机的数据同步。
 
